@@ -1,11 +1,8 @@
 # HowTo
 
-Ini adalah pengganti `blackbox-exporter/probe/` yang pakai `VMStaticScrape` +
-skema string `:_:`-delimited. Directory ini pakai CRD `VMProbe` (sudah
-ter-install di cluster ini dan RBAC-nya sudah diberikan ke operator), yang
-memang didesain khusus untuk probing lewat blackbox_exporter — jadi tidak
-perlu lagi encoding target ke satu string dan decode-nya balik pakai regex
-`relabelConfigs`.
+Directory ini pakai CRD `VMProbe` (sudah ter-install di cluster ini dan
+RBAC-nya sudah diberikan ke operator), yang memang didesain khusus untuk
+probing lewat blackbox_exporter.
 
 Blackbox-exporter berjalan sebagai DaemonSet dengan `hostNetwork: true`,
 artinya tiap node punya instance blackbox-exporter sendiri di port `19115`.
@@ -71,9 +68,6 @@ spec:
       - https://10.21.0.12:6443/healthz
       - https://10.21.0.13:6443/healthz
 ```
-
-Tidak ada delimiter `:_:` lagi — tinggal daftar URL biasa, satu baris per
-target.
 
 ### Ganti `module:` kalau target bukan HTTPS kube-apiserver
 
