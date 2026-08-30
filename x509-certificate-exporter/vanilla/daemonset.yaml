@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: x509-certificate-exporter
+    app.kubernetes.io/part-of: observability
+    app.kubernetes.io/managed-by: kubectl
+    app.kubernetes.io/version: 4.2.0
+  name: x509-certificate-exporter
+  namespace: monitoring-system
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: exporter
+      app.kubernetes.io/name: x509-certificate-exporter
+      app.kubernetes.io/part-of: observability
+  template:
+    metadata:
+      annotations:
+        prometheus.io/port: "9793"
+        prometheus.io/scrape: "true"
+      labels:
+        app.kubernetes.io/component: exporter
+        app.kubernetes.io/name: x509-certificate-exporter
+        app.kubernetes.io/part-of: observability
+        app.kubernetes.io/managed-by: kubectl
+        app.kubernetes.io/version: 4.2.0
+    spec:
+      containers:
+      - args:
+        - --listen-address=:9793
+        - --watch-file=/etc/kubernetes/pki/apiserver.crt
+        - --watch-file=/etc/kubernetes/pki/apiserver-etcd-client.crt
+        - --watch-file=/etc/kubernetes/pki/apiserver-kubelet-client.crt
+        - --watch-file=/etc/kubernetes/pki/ca.crt
+        - --watch-file=/etc/kubernetes/pki/front-proxy-ca.crt
+        - --watch-file=/etc/kubernetes/pki/front-proxy-client.crt
+        - --watch-file=/etc/kubernetes/pki/etcd/ca.crt
+        - --watch-file=/etc/kubernetes/pki/etcd/healthcheck-client.crt
+        - --watch-file=/etc/kubernetes/pki/etcd/peer.crt
+        - --watch-file=/etc/kubernetes/pki/etcd/server.crt
+        - --watch-kubeconf=/etc/kubernetes/admin.conf
+        - --watch-kubeconf=/etc/kubernetes/controller-manager.conf
+        - --watch-kubeconf=/etc/kubernetes/scheduler.conf
+        - --watch-kubeconf=/etc/kubernetes/kubelet.conf
+        image: docker.io/enix/x509-certificate-exporter:4.2.0
+        imagePullPolicy: IfNotPresent
+        name: x509-certificate-exporter
+        ports:
+        - containerPort: 9793
+          name: metrics
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 40Mi
+          requests:
+            cpu: 10m
+            memory: 20Mi
+        securityContext:
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+        volumeMounts:
+        - mountPath: /etc/kubernetes/
+          name: control-plane-certs
+          readOnly: true
+      dnsConfig:
+        options:
+        - name: ndots
+          value: "0"
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+      serviceAccount: x509-certificate-exporter
+      tolerations:
+      - operator: Exists
+      volumes:
+      - hostPath:
+          path: /etc/kubernetes/
+          type: Directory
+        name: control-plane-certs

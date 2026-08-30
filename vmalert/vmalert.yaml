@@ -1,0 +1,73 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMAlert
+metadata:
+  labels:
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/name: vmalert
+    app.kubernetes.io/part-of: victoria-metrics-stack
+    app.kubernetes.io/managed-by: kubectl
+    app.kubernetes.io/version: 1.148.0
+  name: rule
+  namespace: monitoring-system
+spec:
+  datasource:
+    url: "http://vmsingle-tsdb.monitoring-system.svc.cluster.local:8429"
+  dnsConfig:
+    options:
+    - name: ndots
+      value: "0"
+  evaluationInterval: "30s"
+  extraArgs:
+    loggerLevel: INFO
+    loggerTimezone: "Asia/Jakarta"
+  image:
+    repository: victoriametrics/vmalert
+    tag: v1.148.0
+    pullPolicy: IfNotPresent
+  nodeSelector:
+    node-role.kubernetes.io/monitoring: "true"
+  notifier:
+    url: "blackhole"
+  podMetadata:
+    labels:
+      app.kubernetes.io/component: monitoring
+      app.kubernetes.io/name: vmalert
+      app.kubernetes.io/part-of: victoria-metrics-stack
+      app.kubernetes.io/managed-by: victoria-metrics-operator
+      app.kubernetes.io/version: 1.148.0
+  selectAllByDefault: true
+  remoteWrite:
+    url: "http://vmsingle-tsdb.monitoring-system.svc.cluster.local:8429"
+    concurrency: 100
+    flushInterval: 5s
+    maxBatchSize: 100000
+    maxQueueSize: 10000000
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "100Mi"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+  serviceSpec:
+    metadata:
+      labels:
+        app.kubernetes.io/component: monitoring
+        app.kubernetes.io/name: vmalert
+        app.kubernetes.io/part-of: victoria-metrics-stack
+        app.kubernetes.io/managed-by: victoria-metrics-operator
+    spec:
+      ports:
+      - name: http
+        nodePort: 30880
+        port: 8080
+        targetPort: 8080
+      selector:
+        app.kubernetes.io/component: monitoring
+        app.kubernetes.io/name: vmalert
+        app.kubernetes.io/part-of: victoria-metrics-stack
+      type: NodePort
+    useAsDefault: true
+  tolerations:
+  - operator: Exists

@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/name: victoria-metrics-operator
+    app.kubernetes.io/part-of: victoria-metrics-stack
+    app.kubernetes.io/managed-by: kubectl
+    app.kubernetes.io/version: 0.74.1
+  name: victoria-metrics-operator
+  namespace: monitoring-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: monitoring
+      app.kubernetes.io/name: victoria-metrics-operator
+      app.kubernetes.io/part-of: victoria-metrics-stack
+      app.kubernetes.io/managed-by: kubectl
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        app.kubernetes.io/component: monitoring
+        app.kubernetes.io/name: victoria-metrics-operator
+        app.kubernetes.io/part-of: victoria-metrics-stack
+        app.kubernetes.io/managed-by: kubectl
+        app.kubernetes.io/version: 0.74.1
+    spec:
+      containers:
+      - args:
+        - --leader-elect
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=:8080
+        env:
+        - name: OPERATOR_NAME
+          value: victoria-metrics-operator
+        - name: TZ
+          value: Asia/Jakarta
+        - name: WATCH_NAMESPACE
+          value: ""
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: VM_CONTAINERREGISTRY
+          value: docker.io
+        - name: VM_CONFIG_RELOADER_IMAGE
+          value: docker.io/victoriametrics/operator:config-reloader-v0.74.1
+        image: docker.io/victoriametrics/operator:v0.74.1
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        ports: []
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 250m
+            memory: 250Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts: []
+      dnsConfig:
+        options:
+        - name: ndots
+          value: "0"
+      nodeSelector:
+        node-role.kubernetes.io/monitoring: "true"
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: victoria-metrics-operator
+      terminationGracePeriodSeconds: 10
+      tolerations:
+      - operator: Exists
+      volumes: []

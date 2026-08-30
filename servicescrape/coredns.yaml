@@ -1,0 +1,38 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: coredns
+    app.kubernetes.io/part-of: victoria-metrics-stack
+    app.kubernetes.io/managed-by: kubectl
+  name: coredns
+  namespace: monitoring-system
+spec:
+  endpoints:
+  - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    interval: 30s
+    metricRelabelConfigs:
+    - action: drop
+      regex: coredns_dns_(request_duration_seconds_bucket|request_size_bytes_bucket|response_size_bytes_bucket)
+      sourceLabels:
+      - __name__
+    - action: drop
+      regex: (coredns_forward_request_duration_seconds_bucket)
+      sourceLabels:
+      - __name__
+    port: metrics
+    relabelConfigs:
+    - action: replace
+      sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      targetLabel: node
+  jobLabel: k8s-app
+  namespaceSelector:
+    matchNames:
+    - kube-system
+  selector:
+    matchLabels:
+      k8s-app: kube-dns
+      kubernetes.io/cluster-service: "true"
+      kubernetes.io/name: CoreDNS

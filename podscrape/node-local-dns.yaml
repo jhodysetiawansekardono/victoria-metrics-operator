@@ -1,0 +1,27 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: node-local-dns
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: node-local-dns
+    app.kubernetes.io/part-of: victoria-metrics-stack
+    app.kubernetes.io/managed-by: kubectl
+  namespace: monitoring-system
+spec:
+  namespaceSelector:
+    matchNames:
+    - kube-system
+  jobLabel: k8s-app
+  selector:
+    matchLabels:
+      k8s-app: node-local-dns
+  podMetricsEndpoints:
+  - port: metrics
+    honorLabels: true
+    interval: 30s
+    relabelConfigs:
+    - action: replace
+      sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      targetLabel: node

@@ -1,0 +1,19 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  labels:
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/name: vmrule
+    app.kubernetes.io/part-of: victoria-metrics-stack
+    app.kubernetes.io/managed-by: kubectl
+  name: ingress-nginx
+  namespace: monitoring-system
+spec:
+  groups:
+  - name: nginx_ingress_controller_info.rules
+    rules:
+    - expr: |
+        group(
+          nginx_ingress_controller_requests{namespace!=""}
+          ) by (cluster,job,node,controller_class,namespace,ingress)
+      record: nginx_ingress_controller_info

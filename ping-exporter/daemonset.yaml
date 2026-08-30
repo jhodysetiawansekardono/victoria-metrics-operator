@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: ping-exporter
+    app.kubernetes.io/part-of: observability
+    app.kubernetes.io/managed-by: kubectl
+    app.kubernetes.io/version: 1.2.2
+  name: ping-exporter
+  namespace: monitoring-system
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: exporter
+      app.kubernetes.io/name: ping-exporter
+      app.kubernetes.io/part-of: observability
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: exporter
+        app.kubernetes.io/name: ping-exporter
+        app.kubernetes.io/part-of: observability
+        app.kubernetes.io/managed-by: kubectl
+        app.kubernetes.io/version: 1.2.2
+    spec:
+      containers:
+      - args:
+        - --config.path=/config/config.yml
+        command:
+        - /app/ping_exporter
+        image: docker.io/czerwonk/ping_exporter:v1.2.2
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: http
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: ping-exporter
+        ports:
+        - containerPort: 9427
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: http
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 250m
+            memory: 100Mi
+          requests:
+            cpu: 100m
+            memory: 50Mi
+        securityContext:
+          capabilities:
+            add:
+            - CAP_NET_RAW
+        volumeMounts:
+        - mountPath: /config
+          name: config
+      dnsConfig:
+        options:
+        - name: ndots
+          value: "0"
+      nodeSelector:
+        kubernetes.io/os: linux
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      serviceAccountName: ping-exporter
+      tolerations:
+      - operator: Exists
+      volumes:
+      - configMap:
+          name: ping-exporter
+        name: config

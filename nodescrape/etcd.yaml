@@ -1,0 +1,26 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMNodeScrape
+metadata:
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: etcd
+    app.kubernetes.io/part-of: victoria-metrics-stack
+    app.kubernetes.io/managed-by: kubectl
+  name: etcd
+  namespace: monitoring-system
+spec:
+  bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+  interval: 30s
+  port: "2381"
+  relabelConfigs:
+  - targetLabel: instance
+    regex: ^(.*):(.*)
+    replacement: ${1}:${2}
+    sourceLabels:
+    - __address__
+  - replacement: etcd
+    targetLabel: job
+  scheme: http
+  selector:
+    matchLabels:
+      node-role.kubernetes.io/control-plane: "true"

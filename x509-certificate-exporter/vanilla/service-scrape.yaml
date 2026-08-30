@@ -1,0 +1,28 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: x509-certificate-exporter
+    app.kubernetes.io/part-of: victoria-metrics-stack
+    app.kubernetes.io/managed-by: kubectl
+  name: x509-certificate-exporter
+  namespace: monitoring-system
+spec:
+  endpoints:
+  - port: metrics
+    interval: 30s
+    relabelConfigs:
+    - action: replace
+      regex: (.*)
+      replacement: $1
+      sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      targetLabel: node
+    scheme: http
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: exporter
+      app.kubernetes.io/name: x509-certificate-exporter
+      app.kubernetes.io/part-of: observability

@@ -1,0 +1,28 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMNodeScrape
+metadata:
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: rke2-supervisor
+    app.kubernetes.io/part-of: victoria-metrics-stack
+    app.kubernetes.io/managed-by: kubectl
+  name: rke2-supervisor
+  namespace: monitoring-system
+spec:
+  bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+  interval: 30s
+  port: "9345"
+  relabelConfigs:
+  - targetLabel: instance
+    regex: ^(.*):(.*)
+    replacement: ${1}:${2}
+    sourceLabels:
+    - __address__
+  - replacement: rke2-supervisor
+    targetLabel: job
+  scheme: https
+  selector:
+    matchLabels:
+      node-role.kubernetes.io/control-plane: "true"
+  tlsConfig:
+    insecureSkipVerify: true

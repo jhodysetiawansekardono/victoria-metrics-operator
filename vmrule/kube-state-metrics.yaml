@@ -1,0 +1,109 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  labels:
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/name: vmrule
+    app.kubernetes.io/part-of: victoria-metrics-stack
+    app.kubernetes.io/managed-by: kubectl
+  name: kube-state-metrics
+  namespace: monitoring-system
+spec:
+  groups:
+  - name: kube_workload_info.rules
+    rules:
+    - expr: |
+        sum(
+          label_replace(
+            label_replace(
+              kube_pod_info{created_by_kind="Job"},
+              "job_name", "$1", "created_by_name", "(.*)"
+            ) * on(job_name,namespace) group_left(owner_name) kube_job_owner{owner_kind="CronJob"},
+            "app", "$1", "owner_name", "(.*)"
+          )
+        ) by (cluster,job,node,namespace,app,pod)
+      labels:
+        created_by_kind: CronJob
+      record: kube_workload_info
+    - expr: |
+        sum(
+          label_replace(
+            kube_pod_info{created_by_kind="DaemonSet"},
+            "app", "$1", "created_by_name", "(.*)"
+          )
+        ) by (cluster,job,node,namespace,app,pod)
+      labels:
+        created_by_kind: DaemonSet
+      record: kube_workload_info
+    - expr: |
+        sum(
+          label_replace(
+            label_replace(
+              kube_pod_info{created_by_kind="ReplicaSet"},
+              "replicaset", "$1", "created_by_name", "(.*)"
+            ) * on(replicaset,namespace) group_left(owner_name) kube_replicaset_owner,
+            "app", "$1", "owner_name", "(.*)"
+          )
+        ) by (cluster,job,node,namespace,app,pod)
+      labels:
+        created_by_kind: Deployment
+      record: kube_workload_info
+    - expr: |
+        sum(
+          label_replace(
+            label_replace(
+              kube_pod_info{created_by_kind="Job"},
+              "job_name", "$1", "created_by_name", "(.*)"
+            ) * on(job_name,namespace) group_left(job_name) kube_job_owner{owner_kind="<none>"},
+            "app", "$1", "job_name", "(.*)"
+          )
+        ) by (cluster,job,node,namespace,app,pod)
+      labels:
+        created_by_kind: Job
+      record: kube_workload_info
+    - expr: |
+        sum(
+          label_replace(
+            kube_pod_info{created_by_kind="StatefulSet"},
+            "app", "$1", "created_by_name", "(.*)"
+          )
+        ) by (cluster,job,node,namespace,app,pod)
+      labels:
+        created_by_kind: StatefulSet
+      record: kube_workload_info
+    - expr: |
+        sum(
+          label_replace(
+            kube_pod_info{created_by_kind="<none>"},
+            "app", "$1", "pod", "(.*)"
+          )
+        ) by (cluster,job,node,namespace,app,pod)
+      labels:
+        created_by_kind: Pod
+      record: kube_workload_info
+    - expr: |
+        sum(
+          label_replace(
+            kube_pod_info{created_by_kind="Node"}
+            * on(pod,namespace) group_left(container) kube_pod_container_info,
+            "app", "$1", "container", "(.*)"
+          )
+        ) by (cluster,job,node,namespace,app,pod)
+      labels:
+        created_by_kind: StaticPod
+      record: kube_workload_info
+    # For Custom Job Controller
+    - expr: |
+        sum(
+          label_replace(
+            label_replace(
+              label_replace(
+                kube_pod_info{created_by_kind="Job"},
+                "job_name", "$1", "created_by_name", "(.*)"
+              ) * on(job_name,namespace) group_left(owner_name,owner_kind) kube_job_owner{owner_kind!~"CronJob|<none>"},
+              "app", "$1", "owner_name", "(.*)"
+            ),
+            "created_by_kind", "$1", "owner_kind", "(.*)"
+          )
+        ) by (cluster,job,created_by_kind,node,namespace,app,pod)
+      record: kube_workload_info

@@ -1,0 +1,81 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMSingle
+metadata:
+  labels:
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/name: vmsingle
+    app.kubernetes.io/part-of: victoria-metrics-stack
+    app.kubernetes.io/managed-by: kubectl
+    app.kubernetes.io/version: 1.148.0
+  name: tsdb
+  namespace: monitoring-system
+spec:
+  extraArgs:
+    search.maxSeries: "100000000"
+    search.maxQueryLen: "1MB"
+    loggerTimezone: "Asia/Jakarta"
+  dnsConfig:
+    options:
+    - name: ndots
+      value: "0"
+  image:
+    repository: victoriametrics/victoria-metrics
+    tag: v1.148.0
+    pullPolicy: IfNotPresent
+  nodeSelector:
+    node-role.kubernetes.io/monitoring: "true"
+  podMetadata:
+    labels:
+      app.kubernetes.io/component: monitoring
+      app.kubernetes.io/name: vmsingle
+      app.kubernetes.io/part-of: victoria-metrics-stack
+      app.kubernetes.io/managed-by: victoria-metrics-operator
+      app.kubernetes.io/version: 1.148.0
+  removePvcAfterDelete: false
+  replicaCount: 1
+  retentionPeriod: "32d"
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "3Gi"
+  serviceSpec:
+    metadata:
+      labels:
+        app.kubernetes.io/component: monitoring
+        app.kubernetes.io/name: vmsingle
+        app.kubernetes.io/part-of: victoria-metrics-stack
+        app.kubernetes.io/managed-by: victoria-metrics-operator
+    spec:
+      ports:
+      - name: http
+        nodePort: 31429
+        port: 8429
+        targetPort: 8429
+      - name: http-alias
+        nodePort: 30428
+        port: 8428
+        targetPort: 8429
+      selector:
+        app.kubernetes.io/component: monitoring
+        app.kubernetes.io/name: vmsingle
+        app.kubernetes.io/part-of: victoria-metrics-stack
+      type: NodePort
+    useAsDefault: true
+  startupProbe:
+    failureThreshold: 30
+    httpGet:
+      path: /health
+      port: 8429
+      scheme: HTTP
+    periodSeconds: 10
+  storage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 100Gi
+  tolerations:
+  - operator: Exists

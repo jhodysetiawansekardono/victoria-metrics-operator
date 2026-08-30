@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: kube-summary-exporter
+    app.kubernetes.io/part-of: observability
+    app.kubernetes.io/managed-by: kubectl
+    app.kubernetes.io/version: 0.4.8
+  name: kube-summary-exporter
+  namespace: monitoring-system
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: exporter
+      app.kubernetes.io/name: kube-summary-exporter
+      app.kubernetes.io/part-of: observability
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: exporter
+        app.kubernetes.io/name: kube-summary-exporter
+        app.kubernetes.io/part-of: observability
+        app.kubernetes.io/managed-by: kubectl
+        app.kubernetes.io/version: 0.4.8
+    spec:
+      containers:
+      - image: quay.io/utilitywarehouse/kube-summary-exporter:v0.4.8
+        name: kube-summary-exporter
+        ports:
+        - containerPort: 9779
+          name: metrics
+        resources:
+          limits:
+            cpu: 250m
+            memory: 250Mi
+          requests:
+            cpu: 100m
+            memory: 150Mi
+      dnsConfig:
+        options:
+        - name: ndots
+          value: "0"
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: kube-summary-exporter
+      tolerations:
+      - operator: Exists

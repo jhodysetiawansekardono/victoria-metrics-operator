@@ -1,0 +1,33 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: ping-exporter
+    app.kubernetes.io/part-of: victoria-metrics-stack
+    app.kubernetes.io/managed-by: kubectl
+  name: ping-exporter
+  namespace: monitoring-system
+spec:
+  endpoints:
+  - interval: 30s
+    metricRelabelConfigs:
+    - action: labeldrop
+      regex: (target)
+    port: http
+    relabelConfigs:
+    - action: replace
+      regex: (.*)
+      replacement: $1
+      sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      targetLabel: node
+    - action: labeldrop
+      regex: (endpoint|service|namespace)
+    scheme: http
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: exporter
+      app.kubernetes.io/name: ping-exporter
+      app.kubernetes.io/part-of: observability

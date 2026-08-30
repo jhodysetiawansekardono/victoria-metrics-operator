@@ -1,0 +1,41 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: kube-summary-exporter
+    app.kubernetes.io/part-of: victoria-metrics-stack
+    app.kubernetes.io/managed-by: kubectl
+  name: kube-summary-exporter
+  namespace: monitoring-system
+spec:
+  endpoints:
+  - interval: 30s
+    port: metrics
+    metricRelabelConfigs:
+    - action: replace
+      sourceLabels:
+      - name
+      targetLabel: container
+    - action: labeldrop
+      regex: (name)
+    relabelConfigs:
+    - action: replace
+      sourceLabels: 
+      - __meta_kubernetes_pod_node_name
+      targetLabel: node
+    - sourceLabels: 
+      - __meta_kubernetes_pod_node_name
+      targetLabel: __metrics_path__
+      regex: (.+)
+      replacement: /node/${1}
+    - action: labeldrop
+      regex: (container|endpoint|namespace|pod|service)
+    scheme: http
+    scrapeTimeout: 30s
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: exporter
+      app.kubernetes.io/name: kube-summary-exporter
+      app.kubernetes.io/part-of: observability
