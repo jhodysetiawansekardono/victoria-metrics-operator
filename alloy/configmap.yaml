@@ -14,7 +14,7 @@ data:
   config.alloy: |-
     loki.write "push" {
       endpoint {
-        url = "http://mon.ctas-dev.intranet.pajak.go.id:3100/loki/api/v1/push"
+        url = "http://REPLACE_WITH_YOUR_ADDRESSES:3100/loki/api/v1/push"
       }
     }
 
