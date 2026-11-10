@@ -1,0 +1,26 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    meta.helm.sh/release-name: alloy
+    meta.helm.sh/release-namespace: monitoring-system
+  creationTimestamp: "2026-08-18T10:51:07Z"
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/instance: alloy
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/part-of: alloy
+    app.kubernetes.io/version: v1.18.1
+    helm.sh/chart: alloy-1.11.1
+  name: alloy
+  resourceVersion: "1852141"
+  uid: 1ef76d31-831d-4c8e-b859-65a7bb35caf4
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: alloy
+subjects:
+- kind: ServiceAccount
+  name: alloy
+  namespace: monitoring-system
